@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./docs/swagger.js";
+import { swaggerSpec }   from "./docs/swagger.js";
 import healthRouter from "./modules/health/health.routes.js";
 import userRouter   from "./modules/users/user.routes.js";
 import movieRouter  from "./modules/movies/movie.routes.js";
+import matchRouter  from "./modules/matches/match.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { notFound }    from "./middleware/not-found.js";
 
@@ -21,10 +22,10 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // ── Routes ──────────────────────────────────────────────────────────────────
-app.use("/health",      healthRouter);
-app.use("/api/users",   userRouter);
-app.use("/api/movies",  movieRouter);
-// Stage 3: matches router will be mounted here
+app.use("/health",       healthRouter);
+app.use("/api/users",    userRouter);
+app.use("/api/movies",   movieRouter);
+app.use("/api/matches",  matchRouter);
 
 // ── Fallbacks ────────────────────────────────────────────────────────────────
 app.use(notFound);
