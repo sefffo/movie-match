@@ -26,20 +26,20 @@ Movie Match is a **graph-powered movie recommendation engine** built with Expres
 
 ## ◼ Screenshots
 
-### Tonight Page
-![Tonight Page](screenshots/tonight.png)
-
-### Recommendations
-![Recommendations](screenshots/recommendations.png)
+### Tonight — Find a Match
+![Tonight page](screenshots/Tonight.png)
 
 ### My Movies
-![My Movies](screenshots/my-movies.png)
+![My Movies page](screenshots/My%20Movies.png)
+
+### Choosing a Movie
+![Choosing a movie](screenshots/Choosing%20a%20movie.png)
 
 ### Match History
-![Match History](screenshots/history.png)
+![Match History](screenshots/History.png)
 
-### Swagger API Docs
-![Swagger](screenshots/swagger.png)
+### Graph Database
+![CognoDB graph database](screenshots/DB%20.png)
 
 ---
 
@@ -170,7 +170,7 @@ Open:
 2. **New → Web Service** → connect `sefffo/movie-match`
 3. Render auto-detects `render.yaml` → click **Deploy**
 4. Add env vars in Render dashboard: `COGNODB_URI`, `COGNODB_USER`, `COGNODB_PASSWORD`
-5. Live at `https://movie-match.onrender.com`
+5. Live at `https://movie-match-y191.onrender.com/`
 
 > Free tier sleeps after 15 min idle. First request after sleep takes ~30s to wake up.
 
