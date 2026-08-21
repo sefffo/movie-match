@@ -4,345 +4,627 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Movie Match — What are we watching tonight?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet" />
   <style>
-    /* ── Reset & base ───────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── Bauhaus Design Tokens ──────────────────────────────────────────────── */
     :root {
-      --bg:       #0d0d1a;
-      --surface:  #16213e;
-      --card:     #1a2a4a;
-      --accent:   #e94560;
-      --accent2:  #9b5de5;
-      --text:     #eaeaea;
-      --muted:    #8892a4;
-      --border:   rgba(255,255,255,0.08);
-      --radius:   12px;
+      --bg:      #F0F0F0;
+      --black:   #121212;
+      --white:   #ffffff;
+      --red:     #D02020;
+      --blue:    #1040C0;
+      --yellow:  #F0C020;
+      --muted:   #E0E0E0;
+      --shadow-sm:  4px 4px 0px 0px #121212;
+      --shadow-md:  6px 6px 0px 0px #121212;
+      --shadow-lg:  8px 8px 0px 0px #121212;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Outfit', sans-serif;
       background: var(--bg);
-      color: var(--text);
+      color: var(--black);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
-    button { cursor: pointer; font-family: inherit; }
-    input, select, textarea { font-family: inherit; }
-    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: 'Outfit', sans-serif; }
+    input, select { font-family: 'Outfit', sans-serif; }
 
-    /* ── Nav ───────────────────────────────────────────────── */
+    /* ── Nav ────────────────────────────────────────────────────────────── */
     nav {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      background: var(--white);
+      border-bottom: 4px solid var(--black);
       padding: 0 24px;
       display: flex;
       align-items: center;
-      gap: 32px;
-      height: 60px;
+      gap: 24px;
+      height: 64px;
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--accent);
+      font-weight: 900;
+      text-transform: uppercase;
       letter-spacing: -0.5px;
+      color: var(--black);
     }
-    .nav-brand span { color: var(--text); }
+    /* Bauhaus geometric logo */
+    .logo-shapes {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    .logo-circle { width: 16px; height: 16px; border-radius: 50%; background: var(--red); }
+    .logo-square { width: 16px; height: 16px; background: var(--blue); }
+    .logo-tri {
+      width: 0; height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 16px solid var(--yellow);
+    }
     .nav-links { display: flex; gap: 4px; margin-left: auto; }
     .nav-link {
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: var(--muted);
-      transition: all 0.15s;
+      padding: 6px 16px;
+      border: 2px solid transparent;
       background: none;
-      border: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--black);
+      transition: all 0.15s ease-out;
     }
-    .nav-link:hover  { color: var(--text); background: rgba(255,255,255,0.06); }
-    .nav-link.active { color: var(--text); background: rgba(255,255,255,0.1); font-weight: 600; }
+    .nav-link:hover  { background: var(--muted); }
+    .nav-link.active {
+      background: var(--black);
+      color: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
 
-    /* ── Pages ───────────────────────────────────────────────── */
-    .page { display: none; flex: 1; padding: 32px 24px; max-width: 860px; width: 100%; margin: 0 auto; }
+    /* ── Pages ─────────────────────────────────────────────────────────── */
+    .page { display: none; flex: 1; }
     .page.active { display: block; }
 
-    /* ── Hero (Tonight page) ──────────────────────────────── */
-    .hero { text-align: center; padding: 40px 0 32px; }
-    .hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; }
-    .hero h1 span { color: var(--accent); }
-    .hero p { color: var(--muted); margin-top: 8px; font-size: 1rem; }
-
-    /* ── Match panel ────────────────────────────────────────── */
-    .match-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 28px;
-    }
-    .match-selectors {
+    /* ── Hero (Tonight) ──────────────────────────────────────────────── */
+    .hero {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
+      grid-template-columns: 1fr 420px;
+      min-height: 280px;
+      border-bottom: 4px solid var(--black);
+    }
+    .hero-left {
+      padding: 40px 40px;
+      border-right: 4px solid var(--black);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       gap: 12px;
-      margin-bottom: 20px;
     }
-    .vs { color: var(--accent); font-weight: 800; font-size: 1.1rem; text-align: center; }
-    select {
-      width: 100%;
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 0.95rem;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238892a4' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
+    .hero-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--red);
     }
-    select:focus { outline: none; border-color: var(--accent); }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 11px 24px;
-      border-radius: 8px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: all 0.15s;
+    .hero h1 {
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -2px;
+      line-height: 0.9;
+      color: var(--black);
     }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #c73450; transform: translateY(-1px); }
-    .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); }
-    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
-    .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
-    .btn-full { width: 100%; justify-content: center; }
-
-    /* ── Cards ────────────────────────────────────────────────── */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      transition: border-color 0.15s;
+    .hero h1 span { color: var(--red); }
+    .hero-sub { font-size: 1rem; font-weight: 500; color: #444; max-width: 380px; margin-top: 4px; }
+    .hero-right {
+      background: var(--blue);
       position: relative;
-    }
-    .card:hover { border-color: rgba(255,255,255,0.18); }
-    .card-poster {
-      width: 100%;
-      aspect-ratio: 2/3;
-      border-radius: 8px;
-      object-fit: cover;
-      margin-bottom: 12px;
-      background: var(--surface);
-    }
-    .card-poster-placeholder {
-      width: 100%;
-      aspect-ratio: 2/3;
-      border-radius: 8px;
-      margin-bottom: 12px;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.5rem;
-      background: linear-gradient(135deg, var(--surface), var(--card));
     }
-    .card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
-    .card .meta { color: var(--muted); font-size: 0.78rem; margin-bottom: 8px; }
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 600;
+    /* Bauhaus geometric composition in the hero panel */
+    .hero-geo {
+      position: relative;
+      width: 200px;
+      height: 200px;
     }
-    .badge-exact   { background: rgba(233,69,96,0.2);  color: #e94560; }
-    .badge-genre   { background: rgba(155,93,229,0.2); color: #9b5de5; }
-    .badge-chosen  { background: rgba(72,199,116,0.2); color: #48c774; }
-    .badge-pending { background: rgba(136,146,164,0.2); color: var(--muted); }
-
-    /* ── State messages ───────────────────────────────────────── */
-    .state-box {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--muted);
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-    }
-    .state-box .emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
-    .state-box p { font-size: 0.9rem; }
-    .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
+    .geo-circle {
+      position: absolute;
+      width: 140px; height: 140px;
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      background: var(--yellow);
+      top: 0; left: 0;
+    }
+    .geo-square {
+      position: absolute;
+      width: 90px; height: 90px;
+      background: var(--red);
+      bottom: 0; right: 0;
+      transform: rotate(0deg);
+    }
+    .geo-square-sm {
+      position: absolute;
+      width: 50px; height: 50px;
+      background: var(--white);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .geo-tri {
+      position: absolute;
+      width: 0; height: 0;
+      border-left: 24px solid transparent;
+      border-right: 24px solid transparent;
+      border-bottom: 40px solid var(--black);
+      bottom: 30px; left: 20px;
+    }
+
+    /* ── Match Panel ───────────────────────────────────────────────── */
+    .match-panel {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto;
+      align-items: stretch;
+      border-bottom: 4px solid var(--black);
+    }
+    .match-selector-block {
+      padding: 24px 32px;
+      border-right: 4px solid var(--black);
+    }
+    .match-selector-block label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .match-vs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--black);
+      background: var(--yellow);
+      border-right: 4px solid var(--black);
+      letter-spacing: -1px;
+    }
+    .match-btn-block {
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+    }
+    select {
+      width: 100%;
+      background: var(--white);
+      color: var(--black);
+      border: 2px solid var(--black);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      appearance: none;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.15s ease-out, transform 0.15s ease-out;
+    }
+    select:focus { outline: none; box-shadow: var(--shadow-md); }
+
+    /* ── Buttons ───────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: 2px solid var(--black);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.15s ease-out;
+      white-space: nowrap;
+    }
+    .btn-red    { background: var(--red);    color: var(--white); box-shadow: var(--shadow-sm); }
+    .btn-blue   { background: var(--blue);   color: var(--white); box-shadow: var(--shadow-sm); }
+    .btn-yellow { background: var(--yellow); color: var(--black); box-shadow: var(--shadow-sm); }
+    .btn-black  { background: var(--black);  color: var(--white); box-shadow: var(--shadow-sm); }
+    .btn-white  { background: var(--white);  color: var(--black); box-shadow: var(--shadow-sm); }
+    .btn:hover:not(:disabled)  { opacity: 0.9; transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
+    .btn:active:not(:disabled) { transform: translate(2px,2px); box-shadow: none !important; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn-sm { padding: 7px 14px; font-size: 0.75rem; }
+
+    /* ── Results Section ─────────────────────────────────────────────── */
+    .results-section { padding: 32px 40px; }
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .section-label h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--black);
+    }
+    .section-label-line { flex: 1; height: 2px; background: var(--black); }
+    .section-label-badge {
+      background: var(--black);
+      color: var(--white);
+      padding: 3px 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── Movie Cards ──────────────────────────────────────────────────── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--white);
+      border: 2px solid var(--black);
+      box-shadow: var(--shadow-lg);
+      padding: 20px;
+      position: relative;
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+      overflow: hidden;
+    }
+    .card:hover { transform: translate(-3px,-3px); box-shadow: 10px 10px 0 0 var(--black); }
+    .card-corner {
+      position: absolute;
+      top: 12px; right: 12px;
+      width: 12px; height: 12px;
+    }
+    .card-corner.circle { border-radius: 50%; }
+    .card-poster-placeholder {
+      width: 100%;
+      aspect-ratio: 2/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      border: 2px solid var(--black);
+      margin-bottom: 14px;
+    }
+    .card-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      border: 2px solid var(--black);
+      margin-bottom: 14px;
+      filter: grayscale(30%);
+    }
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .card .meta { font-size: 0.78rem; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border: 2px solid var(--black);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .tag-red    { background: var(--red);    color: var(--white); }
+    .tag-blue   { background: var(--blue);   color: var(--white); }
+    .tag-yellow { background: var(--yellow); color: var(--black); }
+    .tag-black  { background: var(--black);  color: var(--white); }
+
+    /* ── State boxes ─────────────────────────────────────────────────── */
+    .state-box {
+      border: 2px solid var(--black);
+      padding: 48px 24px;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+    }
+    .state-box .emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
+    .state-box p { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #444; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--muted);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
       margin: 0 auto 12px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Section header ───────────────────────────────────────── */
-    .section-header {
+    /* ── Page: My Movies ────────────────────────────────────────────── */
+    .page-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 32px 40px;
+      border-bottom: 4px solid var(--black);
+      background: var(--white);
+    }
+    .page-header h1 {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .page-header h1 span { color: var(--red); }
+    .page-header p { font-size: 0.85rem; font-weight: 500; color: #666; margin-top: 6px; }
+    .movies-body { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 200px); }
+    .movies-sidebar {
+      border-right: 4px solid var(--black);
+      padding: 32px;
+      background: var(--white);
+    }
+    .movies-main { padding: 32px 40px; }
+
+    /* Form styles */
+    .form-section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--red);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-section-title::after { content: ''; flex: 1; height: 2px; background: var(--red); }
+    .form-field { margin-bottom: 14px; }
+    .form-field label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      color: var(--black);
+    }
+    .form-field input {
+      width: 100%;
+      background: var(--white);
+      border: 2px solid var(--black);
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--black);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.15s;
+    }
+    .form-field input:focus { outline: none; box-shadow: var(--shadow-md); }
+    .form-field select { box-shadow: var(--shadow-sm); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Movie rows */
+    .movie-row {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 2px solid var(--black);
+      margin-bottom: 8px;
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    }
+    .movie-row:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-md); }
+    .movie-icon {
+      width: 42px; height: 42px;
+      border: 2px solid var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .movie-info strong {
+      display: block;
+      font-weight: 900;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: -0.3px;
+    }
+    .movie-info small { font-size: 0.72rem; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+    .movie-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      background: var(--white);
+      border: 2px solid var(--black);
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      box-shadow: 2px 2px 0 0 var(--black);
+      transition: all 0.15s ease-out;
+    }
+    .icon-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 0 var(--black); }
+    .icon-btn:active { transform: translate(1px,1px); box-shadow: none; }
+
+    /* Search */
+    .search-bar {
+      width: 100%;
+      background: var(--white);
+      border: 2px solid var(--black);
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--black);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+    .search-bar:focus { outline: none; }
+
+    /* User selector bar */
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 32px;
+      background: var(--yellow);
+      border-bottom: 4px solid var(--black);
+    }
+    .user-bar label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      flex-shrink: 0;
+    }
+    .user-bar select { flex: 1; max-width: 260px; background: var(--white); }
+
+    /* ── Page: History ─────────────────────────────────────────────── */
+    .history-body { padding: 32px 40px; max-width: 900px; }
+    .history-card {
+      background: var(--white);
+      border: 2px solid var(--black);
+      box-shadow: var(--shadow-md);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .history-card-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      padding: 16px 20px;
+      border-bottom: 2px solid var(--black);
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .section-header h2 { font-size: 1rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-
-    /* ── Form (My Movies page) ──────────────────────────────── */
-    .form-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 28px;
-    }
-    .form-panel h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .form-field { display: flex; flex-direction: column; gap: 6px; }
-    .form-field.full { grid-column: 1 / -1; }
-    .form-field label { font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-field input, .form-field select {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      padding: 10px 12px;
-      font-size: 0.9rem;
-    }
-    .form-field input:focus, .form-field select:focus { outline: none; border-color: var(--accent); }
-    .form-actions { display: flex; gap: 10px; margin-top: 16px; }
-
-    /* ── Movie item in lists ─────────────────────────────────────── */
-    .movie-row {
+    .history-users { display: flex; align-items: center; gap: 8px; font-weight: 900; text-transform: uppercase; font-size: 0.9rem; }
+    .history-sep { color: var(--red); font-weight: 900; }
+    .history-card-body { padding: 16px 20px; }
+    .history-chosen {
+      background: var(--yellow);
+      border: 2px solid var(--black);
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 14px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 8px;
     }
-    .movie-row-icon { font-size: 1.4rem; flex-shrink: 0; }
-    .movie-row-info { flex: 1; min-width: 0; }
-    .movie-row-info strong { font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .movie-row-info small { color: var(--muted); font-size: 0.78rem; }
-    .movie-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .icon-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--muted);
-      padding: 5px 8px;
-      font-size: 0.8rem;
-      transition: all 0.15s;
-    }
-    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .icon-btn.danger:hover { border-color: #e74c3c; color: #e74c3c; }
-
-    /* ── User avatar chip ────────────────────────────────────────── */
-    .avatar {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .history-chosen-icon { font-size: 1.5rem; }
+    .history-chosen strong { font-size: 1rem; font-weight: 900; text-transform: uppercase; }
+    .history-chosen small { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #444; }
+    .history-pending {
+      color: #666;
+      font-size: 0.78rem;
       font-weight: 700;
-      font-size: 0.75rem;
-      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    .user-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 12px 4px 4px;
-      font-size: 0.85rem;
-    }
-
-    /* ── History cards ──────────────────────────────────────────── */
-    .history-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 14px;
-    }
-    .history-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .history-users { display: flex; align-items: center; gap: 6px; }
-    .history-users .sep { color: var(--muted); font-size: 0.8rem; }
-    .history-chosen {
-      background: rgba(72,199,116,0.1);
-      border: 1px solid rgba(72,199,116,0.25);
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .history-chosen .trophy { font-size: 1.3rem; }
-    .recs-strip { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-    .rec-chip {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+    .status-tag {
       padding: 3px 10px;
-      font-size: 0.75rem;
-      color: var(--muted);
+      border: 2px solid var(--black);
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
+    .status-chosen  { background: var(--blue); color: var(--white); }
+    .status-pending { background: var(--muted); color: var(--black); }
 
-    /* ── Toast ─────────────────────────────────────────────────── */
+    /* ── Toast ────────────────────────────────────────────────────────── */
     #toast {
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(80px);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 0.9rem;
+      background: var(--black);
+      color: var(--white);
+      border: 2px solid var(--black);
+      box-shadow: var(--shadow-md);
+      padding: 12px 24px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
       z-index: 999;
-      transition: transform 0.25s ease;
+      transition: transform 0.25s ease-out;
       white-space: nowrap;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
     #toast.show { transform: translateX(-50%) translateY(0); }
-    #toast.success { border-color: rgba(72,199,116,0.4); }
-    #toast.error   { border-color: rgba(233,69,96,0.4); }
+    #toast.success { background: var(--blue); }
+    #toast.error   { background: var(--red);  }
 
-    /* ── Responsive ───────────────────────────────────────────── */
-    @media (max-width: 600px) {
-      .match-selectors { grid-template-columns: 1fr; }
-      .vs { display: none; }
-      .form-grid { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 1.8rem; }
+    /* ── Winner announcement ──────────────────────────────────────────── */
+    .winner-block {
+      background: var(--yellow);
+      border: 4px solid var(--black);
+      box-shadow: var(--shadow-lg);
+      padding: 32px 40px;
+      text-align: center;
     }
+    .winner-block .w-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px; }
+    .winner-block .w-title { font-size: 2.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+    .winner-block .w-sub { font-size: 0.85rem; font-weight: 500; color: #444; margin-top: 6px; }
+
+    /* ── Responsive ────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-right { display: none; }
+      .hero-left { padding: 28px 20px; }
+      .match-panel { grid-template-columns: 1fr; }
+      .match-selector-block { border-right: none; border-bottom: 4px solid var(--black); }
+      .match-vs { padding: 12px; border-right: none; border-bottom: 4px solid var(--black); }
+      .match-btn-block { border-top: none; }
+      .movies-body { grid-template-columns: 1fr; }
+      .movies-sidebar { border-right: none; border-bottom: 4px solid var(--black); }
+      .page-header { padding: 20px; grid-template-columns: 1fr; }
+      .results-section { padding: 20px; }
+      .history-body { padding: 20px; }
+      .movies-main { padding: 20px; }
+      .user-bar { padding: 12px 20px; }
+    }
+
+    /* ── Motion fade-in utility (used by JS-injected elements) ── */
+    @keyframes bauhaus-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bauhaus-slide-right {
+      from { opacity: 0; transform: translateX(-24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .anim-in   { animation: bauhaus-in 0.35s ease-out both; }
+    .anim-stagger > * { animation: bauhaus-in 0.35s ease-out both; }
+    .anim-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+    .anim-stagger > *:nth-child(2) { animation-delay: 0.10s; }
+    .anim-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+    .anim-stagger > *:nth-child(4) { animation-delay: 0.20s; }
+    .anim-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+    .anim-stagger > *:nth-child(6) { animation-delay: 0.30s; }
   </style>
 </head>
 <body>
 
-<!-- ── Nav ─────────────────────────────────────────────────────── -->
+<!-- ── Nav ──────────────────────────────────────────────────────────── -->
 <nav>
-  <div class="nav-brand">🎬 Movie<span>Match</span></div>
+  <div class="nav-brand">
+    <div class="logo-shapes">
+      <div class="logo-circle"></div>
+      <div class="logo-square"></div>
+      <div class="logo-tri"></div>
+    </div>
+    Movie Match
+  </div>
   <div class="nav-links">
     <button class="nav-link active" onclick="showPage('tonight')">Tonight</button>
     <button class="nav-link" onclick="showPage('movies')">My Movies</button>
@@ -350,153 +632,175 @@
   </div>
 </nav>
 
-<!-- ── Page: Tonight ────────────────────────────────────────────── -->
+<!-- ── PAGE: Tonight ───────────────────────────────────────────────── -->
 <div id="page-tonight" class="page active">
+  <!-- Hero -->
   <div class="hero">
-    <h1>What are we watching <span>tonight?</span></h1>
-    <p>Pick two people — Movie Match ends the scrolling.</p>
+    <div class="hero-left anim-in">
+      <div class="hero-label">■ Movie Night</div>
+      <h1>What are<br/>we watching<br/><span>tonight?</span></h1>
+      <p class="hero-sub">Pick two people — Movie Match ends the scrolling.</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-geo">
+        <div class="geo-circle"></div>
+        <div class="geo-square"></div>
+        <div class="geo-square-sm"></div>
+        <div class="geo-tri"></div>
+      </div>
+    </div>
   </div>
 
+  <!-- Match selector -->
   <div class="match-panel">
-    <div class="match-selectors">
+    <div class="match-selector-block">
+      <label>● Person One</label>
       <select id="user1Select"><option value="">Loading…</option></select>
-      <div class="vs">VS</div>
+    </div>
+    <div class="match-vs">VS</div>
+    <div class="match-selector-block">
+      <label>● Person Two</label>
       <select id="user2Select"><option value="">Loading…</option></select>
     </div>
-    <button class="btn btn-primary btn-full" id="matchBtn" disabled onclick="runMatch()">
-      🎬 Find our movie
-    </button>
-  </div>
-
-  <div id="matchResults"></div>
-</div>
-
-<!-- ── Page: My Movies ───────────────────────────────────────────── -->
-<div id="page-movies" class="page">
-  <div class="section-header" style="margin-bottom:24px">
-    <div>
-      <h1 style="font-size:1.6rem;font-weight:800">My Movies</h1>
-      <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Add movies and manage your watchlist & likes</p>
+    <div class="match-btn-block">
+      <button class="btn btn-red" id="matchBtn" disabled onclick="runMatch()">
+        ▶ Find Our Movie
+      </button>
     </div>
   </div>
 
-  <!-- Who am I -->
-  <div class="form-panel" style="padding:16px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-    <label style="color:var(--muted);font-size:0.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Viewing as</label>
-    <select id="myUserSelect" onchange="loadMyMovies()" style="flex:1;min-width:160px;max-width:260px"><option value="">Select user…</option></select>
-    <button class="btn btn-secondary btn-sm" onclick="showCreateUserModal()">+ New user</button>
+  <!-- Results -->
+  <div class="results-section" id="matchResults"></div>
+</div>
+
+<!-- ── PAGE: My Movies ─────────────────────────────────────────────── -->
+<div id="page-movies" class="page">
+  <div class="page-header">
+    <div>
+      <h1>My <span>Movies</span></h1>
+      <p>Add movies — manage your watchlist &amp; likes</p>
+    </div>
+    <button class="btn btn-black" onclick="showCreateUserModal()">+ New User</button>
   </div>
 
-  <!-- Add movie form -->
-  <div class="form-panel">
-    <h2>➕ Add a Movie</h2>
-    <div class="form-grid">
-      <div class="form-field full">
+  <div class="user-bar">
+    <label>Viewing as →</label>
+    <select id="myUserSelect" onchange="loadMyMovies()">
+      <option value="">Select user…</option>
+    </select>
+  </div>
+
+  <div class="movies-body">
+    <!-- Sidebar: Add movie form -->
+    <div class="movies-sidebar">
+      <div class="form-section-title">Add Movie</div>
+
+      <div class="form-field">
         <label>Title</label>
         <input id="movieTitle" type="text" placeholder="e.g. Interstellar" />
       </div>
-      <div class="form-field">
-        <label>Genre</label>
-        <select id="movieGenre"><option value="">Select…</option></select>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Genre</label>
+          <select id="movieGenre"><option value="">Select…</option></select>
+        </div>
+        <div class="form-field">
+          <label>Year</label>
+          <input id="movieYear" type="number" placeholder="2014" min="1900" max="2099" />
+        </div>
       </div>
       <div class="form-field">
-        <label>Year</label>
-        <input id="movieYear" type="number" placeholder="2014" min="1900" max="2099" />
+        <label>Poster URL <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input id="moviePoster" type="url" placeholder="https://…" />
       </div>
-      <div class="form-field full">
-        <label>Poster URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-        <input id="moviePoster" type="url" placeholder="https://..." />
-      </div>
+      <button class="btn btn-red btn-full" onclick="createMovie()">+ Add Movie</button>
     </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="createMovie()">Add Movie</button>
-    </div>
-  </div>
 
-  <!-- Movie list -->
-  <div class="section-header">
-    <h2>All Movies</h2>
-    <input id="searchInput" type="text" placeholder="Search…" oninput="searchMovies()"
-      style="background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 12px;font-size:0.85rem;width:180px" />
+    <!-- Main: Movie list -->
+    <div class="movies-main">
+      <input class="search-bar" id="searchInput" type="text" placeholder="⌕  Search by title or genre…" oninput="searchMovies()" />
+      <div id="movieList"></div>
+    </div>
   </div>
-  <div id="movieList"></div>
 </div>
 
-<!-- ── Page: History ─────────────────────────────────────────────── -->
+<!-- ── PAGE: History ───────────────────────────────────────────────── -->
 <div id="page-history" class="page">
-  <div style="margin-bottom:24px">
-    <h1 style="font-size:1.6rem;font-weight:800">Match History</h1>
-    <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Every movie night decision, saved forever.</p>
+  <div class="page-header">
+    <div>
+      <h1>Match <span>History</span></h1>
+      <p>Every movie night decision, saved forever.</p>
+    </div>
+    <button class="btn btn-blue" onclick="loadHistory()">Refresh</button>
   </div>
-  <div id="historyList"></div>
+  <div class="history-body" id="historyList"></div>
 </div>
 
-<!-- ── Toast ──────────────────────────────────────────────────────── -->
+<!-- Toast -->
 <div id="toast"></div>
 
-<script>
-// ───────────────────────────────────────────────────────────────────────────────
-const API = '';
-let _users  = [];
-let _genres = [];
-let _allMovies = [];
+<script type="module">
+import { animate, stagger } from 'https://cdn.jsdelivr.net/npm/motion@11/+esm';
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+const API = '';
+let _users = [], _genres = [], _allMovies = [];
+
+// ── API helper ───────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
-  const res = await fetch(API + path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
-  });
+  const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json?.error?.message || 'Request failed');
   return json.data;
 }
 
-let toastTimer;
+let _toastTimer;
 function toast(msg, type = 'success') {
   const el = document.getElementById('toast');
-  el.textContent = (type === 'success' ? '\u2705 ' : '\u274c ') + msg;
+  el.textContent = msg;
   el.className = 'show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 3000);
 }
 
 function stateBox(emoji, msg) {
-  return `<div class="state-box"><span class="emoji">${emoji}</span><p>${msg}</p></div>`;
+  return `<div class="state-box anim-in"><span class="emoji">${emoji}</span><p>${msg}</p></div>`;
 }
 function loadingBox() {
   return `<div class="state-box"><div class="spinner"></div><p>Loading…</p></div>`;
 }
 
-function genreIcon(genre) {
-  const map = { 'Sci-Fi': '\uD83D\uDE80', Action: '\uD83D\uDCA5', Horror: '\uD83D\uDC7B',
-    Comedy: '\uD83D\uDE02', Drama: '\uD83C\uDFAD', Thriller: '\uD83D\uDD2A', Mystery: '\uD83D\uDD75\uFE0F',
-    Animation: '\uD83C\uDFAC', Musical: '\uD83C\uDFB6', Romance: '\u2764\uFE0F', Crime: '\uD83D\uDD2B',
-    Fantasy: '\u2728', Documentary: '\uD83C\uDFA5', Western: '\uD83E\uDD20' };
-  return map[genre] || '\uD83C\uDFAC';
-}
+const GENRE_ICONS = {
+  'Sci-Fi':'🚀', Action:'💥', Horror:'👻', Comedy:'😂',
+  Drama:'🎭', Thriller:'🔪', Mystery:'🕵\uFE0F', Animation:'🎬',
+  Musical:'🎶', Romance:'❤\uFE0F', Crime:'🔫', Fantasy:'\u2728',
+  Documentary:'🎥', Western:'🤠'
+};
+const CORNER_COLORS = ['#D02020','#1040C0','#F0C020'];
+const CORNER_SHAPES = ['circle',''];
 
-function avatarEl(user) {
-  if (!user) return '';
-  const letter = (user.name || '?')[0].toUpperCase();
-  const color  = user.avatarColor || '#e94560';
-  return `<div class="avatar" style="background:${color}20;color:${color}">${letter}</div>`;
-}
+function genreIcon(g) { return GENRE_ICONS[g] || '🎬'; }
 
-// ── Navigation ────────────────────────────────────────────────────────────────
-function showPage(name) {
+// ── Nav ───────────────────────────────────────────────────────────────────
+window.showPage = function(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav-link').forEach(b => {
-    if (b.textContent.toLowerCase().includes(name === 'tonight' ? 'tonight' : name === 'movies' ? 'movie' : 'history'))
-      b.classList.add('active');
+    const map = { tonight: 'tonight', movies: 'movie', history: 'history' };
+    if (b.textContent.toLowerCase().includes(map[name])) b.classList.add('active');
   });
   if (name === 'history') loadHistory();
   if (name === 'movies')  loadAllMovies();
-}
 
-// ── Init ────────────────────────────────────────────────────────────────────
+  // Page entrance animation
+  animate(
+    document.getElementById('page-' + name),
+    { opacity: [0, 1] },
+    { duration: 0.3, easing: 'ease-out' }
+  );
+};
+
+// ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   try {
     [_users, _genres] = await Promise.all([
@@ -505,6 +809,11 @@ async function init() {
     ]);
     populateUserSelects();
     populateGenreSelect();
+    // Animate hero geometric shapes on load
+    animate('.geo-circle', { scale: [0, 1] }, { duration: 0.5, easing: [0.34, 1.56, 0.64, 1] });
+    animate('.geo-square', { scale: [0, 1] }, { duration: 0.5, delay: 0.1, easing: [0.34, 1.56, 0.64, 1] });
+    animate('.geo-square-sm', { rotate: [0, 45], scale: [0, 1] }, { duration: 0.5, delay: 0.2, easing: [0.34, 1.56, 0.64, 1] });
+    animate('.geo-tri', { opacity: [0, 1], y: [10, 0] }, { duration: 0.4, delay: 0.3 });
   } catch {
     toast('Could not reach the server', 'error');
   }
@@ -512,9 +821,9 @@ async function init() {
 
 function populateUserSelects() {
   const opts = _users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-  const placeholder = '<option value="">Select person…</option>';
-  document.getElementById('user1Select').innerHTML = placeholder + opts;
-  document.getElementById('user2Select').innerHTML = placeholder + opts;
+  const ph = '<option value="">Select person…</option>';
+  document.getElementById('user1Select').innerHTML = ph + opts;
+  document.getElementById('user2Select').innerHTML = ph + opts;
   document.getElementById('myUserSelect').innerHTML = '<option value="">Select user…</option>' + opts;
   document.getElementById('matchBtn').disabled = _users.length < 2;
 }
@@ -525,8 +834,8 @@ function populateGenreSelect() {
     _genres.map(g => `<option value="${g}">${g}</option>`).join('');
 }
 
-// ── TONIGHT PAGE ────────────────────────────────────────────────────────────
-async function runMatch() {
+// ── TONIGHT ────────────────────────────────────────────────────────────────
+window.runMatch = async function() {
   const u1 = document.getElementById('user1Select').value;
   const u2 = document.getElementById('user2Select').value;
   if (!u1 || !u2) return toast('Pick two people first', 'error');
@@ -537,6 +846,9 @@ async function runMatch() {
   btn.disabled = true;
   results.innerHTML = loadingBox();
 
+  // Button press animation
+  animate(btn, { scale: [1, 0.95, 1] }, { duration: 0.2 });
+
   try {
     const match = await api('/api/matches', {
       method: 'POST',
@@ -544,101 +856,123 @@ async function runMatch() {
     });
     renderMatchResults(match);
   } catch (err) {
-    results.innerHTML = stateBox('\u274c', err.message);
+    results.innerHTML = stateBox('❌', err.message);
     toast(err.message, 'error');
   } finally {
     btn.disabled = false;
   }
-}
+};
 
 function renderMatchResults(match) {
   const results = document.getElementById('matchResults');
   if (!match.recommendations.length) {
-    results.innerHTML = stateBox('\uD83E\uDD14',
-      'No overlap found yet! Add more movies to both watchlists.');
+    results.innerHTML = stateBox('🤔', 'No overlap found yet! Add more movies to both watchlists.');
     return;
   }
 
   const isExact = match.matchType === 'exact';
-  const cards = match.recommendations.map(m => `
-    <div class="card">
-      ${m.posterUrl
-        ? `<img class="card-poster" src="${m.posterUrl}" alt="${m.title}" onerror="this.style.display='none'" />`
-        : `<div class="card-poster-placeholder">${genreIcon(m.genre)}</div>`}
-      <h3>${m.title}</h3>
-      <div class="meta">${m.genre} &middot; ${m.year}</div>
-      <div style="margin-bottom:10px">
-        <span class="badge ${isExact ? 'badge-exact' : 'badge-genre'}">
-          ${isExact ? '\u2764\uFE0F Both want this' : '\u2728 Genre match'}
-        </span>
-      </div>
-      <button class="btn btn-secondary btn-sm btn-full" onclick="chooseWinner('${match.id}', '${m.id}', '${m.title.replace(/'/g, "\\'")}')">
-        \uD83C\uDFC6 We watched this!
-      </button>
-    </div>
-  `).join('');
+  const tagClass = isExact ? 'tag-red' : 'tag-blue';
+  const tagLabel = isExact ? '❤️ Both want this' : '✨ Genre match';
+  const cornerColors = ['#D02020','#1040C0','#F0C020'];
+
+  const cards = match.recommendations.map((m, i) => {
+    const cc = cornerColors[i % 3];
+    const isCircle = i % 2 === 0;
+    return `
+      <div class="card" style="animation-delay:${i * 0.07}s">
+        <div class="card-corner ${isCircle ? 'circle' : ''}" style="background:${cc}"></div>
+        ${m.posterUrl
+          ? `<img class="card-poster" src="${m.posterUrl}" alt="${m.title}" onerror="this.style.display='none'" />`
+          : `<div class="card-poster-placeholder" style="background:${cc}20">${genreIcon(m.genre)}</div>`}
+        <h3>${m.title}</h3>
+        <div class="meta">${m.genre} &middot; ${m.year}</div>
+        <div class="tag ${tagClass}" style="margin-bottom:12px">${tagLabel}</div><br/>
+        <button class="btn btn-black btn-full btn-sm" onclick="chooseWinner('${match.id}','${m.id}','${m.title.replace(/'/g,"\\'")}')">
+          🏆 We watched this!
+        </button>
+      </div>`;
+  }).join('');
 
   results.innerHTML = `
-    <div class="section-header" style="margin-bottom:14px">
+    <div class="section-label">
       <h2>${match.recommendations.length} Recommendation${match.recommendations.length > 1 ? 's' : ''}</h2>
-      <span class="badge ${isExact ? 'badge-exact' : 'badge-genre'}">
-        ${isExact ? 'Exact match' : 'Genre-based'}
-      </span>
+      <div class="section-label-line"></div>
+      <div class="section-label-badge">${isExact ? 'Exact Match' : 'Genre Based'}</div>
     </div>
-    <div class="grid">${cards}</div>
-  `;
+    <div class="grid anim-stagger">${cards}</div>`;
+
+  // Animate cards in with stagger
+  setTimeout(() => {
+    const cardEls = results.querySelectorAll('.card');
+    if (cardEls.length) {
+      animate(cardEls, { opacity: [0, 1], y: [24, 0] }, { delay: stagger(0.07), duration: 0.35, easing: 'ease-out' });
+    }
+  }, 10);
 }
 
-async function chooseWinner(matchId, movieId, title) {
+window.chooseWinner = async function(matchId, movieId, title) {
   try {
     await api(`/api/matches/${matchId}/choose`, {
       method: 'POST',
       body: JSON.stringify({ movieId }),
     });
-    toast(`\uD83C\uDFC6 Enjoy ${title}!`);
-    document.getElementById('matchResults').innerHTML =
-      stateBox('\uD83C�', `Great choice! You\'re watching <strong>${title}</strong> tonight.`);
+    toast(`🏆 Enjoy ${title}!`);
+    const results = document.getElementById('matchResults');
+    results.innerHTML = `
+      <div class="winner-block anim-in">
+        <div class="w-label">■ Tonight you are watching</div>
+        <div class="w-title">${title}</div>
+        <div class="w-sub">Saved to your match history. Enjoy the movie!</div>
+      </div>`;
+    animate('.winner-block', { scale: [0.9, 1], opacity: [0, 1] }, { duration: 0.4, easing: [0.34, 1.56, 0.64, 1] });
   } catch (err) {
     toast(err.message, 'error');
   }
-}
+};
 
-// ── MOVIES PAGE ─────────────────────────────────────────────────────────────
+// ── MOVIES PAGE ───────────────────────────────────────────────────────────
 async function loadAllMovies(search = '') {
   const list = document.getElementById('movieList');
   list.innerHTML = loadingBox();
   try {
     _allMovies = await api('/api/movies' + (search ? `?search=${encodeURIComponent(search)}` : ''));
     renderMovieList();
-  } catch { list.innerHTML = stateBox('\u274c', 'Could not load movies'); }
+  } catch { list.innerHTML = stateBox('❌', 'Could not load movies'); }
 }
 
 function renderMovieList() {
   const list = document.getElementById('movieList');
   const userId = document.getElementById('myUserSelect').value;
   if (!_allMovies.length) {
-    list.innerHTML = stateBox('\uD83C\uDFAC', 'No movies yet. Add one above!');
+    list.innerHTML = stateBox('🎬', 'No movies yet. Add one!');
     return;
   }
-  list.innerHTML = _allMovies.map(m => `
-    <div class="movie-row">
-      <div class="movie-row-icon">${genreIcon(m.genre)}</div>
-      <div class="movie-row-info">
+  list.innerHTML = _allMovies.map((m, i) => `
+    <div class="movie-row" style="animation-delay:${i*0.04}s">
+      <div class="movie-icon">${genreIcon(m.genre)}</div>
+      <div class="movie-info">
         <strong>${m.title}</strong>
         <small>${m.genre} &middot; ${m.year}</small>
       </div>
-      <div class="movie-row-actions">
+      <div class="movie-actions">
         ${userId ? `
-          <button class="icon-btn" title="Add to Watchlist" onclick="addToWatchlist('${userId}', '${m.id}', '${m.title.replace(/'/g, "\\'")}')">📌</button>
-          <button class="icon-btn" title="Mark as Liked"    onclick="addLike('${userId}', '${m.id}', '${m.title.replace(/'/g, "\\'")}')">❤\uFE0F</button>
+          <button class="icon-btn" title="Watchlist" onclick="addToWatchlist('${userId}','${m.id}','${m.title.replace(/'/g,"\\'")}')">📌</button>
+          <button class="icon-btn" title="Like" onclick="addLike('${userId}','${m.id}','${m.title.replace(/'/g,"\\'")}')">❤️</button>
         ` : ''}
-        <button class="icon-btn danger" title="Delete" onclick="deleteMovie('${m.id}', '${m.title.replace(/'/g, "\\'")}')">🗑\uFE0F</button>
+        <button class="icon-btn" title="Delete" onclick="deleteMovie('${m.id}','${m.title.replace(/'/g,"\\'")}')" style="border-color:#D02020;color:#D02020">🗑️</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
+
+  // Stagger animate rows
+  setTimeout(() => {
+    const rows = list.querySelectorAll('.movie-row');
+    if (rows.length) {
+      animate(rows, { opacity: [0, 1], x: [-16, 0] }, { delay: stagger(0.04), duration: 0.3, easing: 'ease-out' });
+    }
+  }, 10);
 }
 
-async function createMovie() {
+window.createMovie = async function() {
   const title  = document.getElementById('movieTitle').value.trim();
   const genre  = document.getElementById('movieGenre').value;
   const year   = document.getElementById('movieYear').value;
@@ -646,114 +980,109 @@ async function createMovie() {
   if (!title || !genre || !year) return toast('Title, genre and year are required', 'error');
   try {
     await api('/api/movies', { method: 'POST', body: JSON.stringify({ title, genre, year: +year, posterUrl: poster }) });
-    toast(`\"${title}\" added`);
+    toast(`“${title}” added`);
     document.getElementById('movieTitle').value  = '';
     document.getElementById('movieYear').value   = '';
     document.getElementById('moviePoster').value = '';
     loadAllMovies();
   } catch (err) { toast(err.message, 'error'); }
-}
+};
 
-async function deleteMovie(id, title) {
-  if (!confirm(`Delete \"${title}\"? This removes it from all watchlists.`)) return;
+window.deleteMovie = async function(id, title) {
+  if (!confirm(`Delete “${title}”?`)) return;
   try {
     await api(`/api/movies/${id}`, { method: 'DELETE' });
-    toast(`\"${title}\" deleted`);
+    toast(`“${title}” deleted`);
     loadAllMovies();
   } catch (err) { toast(err.message, 'error'); }
-}
+};
 
-function searchMovies() {
-  const q = document.getElementById('searchInput').value.trim();
-  loadAllMovies(q);
-}
+window.searchMovies = function() { loadAllMovies(document.getElementById('searchInput').value.trim()); };
+window.loadMyMovies = function() { renderMovieList(); };
 
-function loadMyMovies() { renderMovieList(); }
-
-async function addToWatchlist(userId, movieId, title) {
+window.addToWatchlist = async function(userId, movieId, title) {
   try {
     await api(`/api/users/${userId}/watchlist`, { method: 'POST', body: JSON.stringify({ movieId }) });
-    toast(`Added \"${title}\" to watchlist \uD83D\uDCCC`);
+    toast(`“${title}” added to watchlist 📌`);
   } catch (err) { toast(err.message, 'error'); }
-}
+};
 
-async function addLike(userId, movieId, title) {
+window.addLike = async function(userId, movieId, title) {
   try {
     await api(`/api/users/${userId}/likes`, { method: 'POST', body: JSON.stringify({ movieId }) });
-    toast(`\"${title}\" marked as liked \u2764\uFE0F`);
+    toast(`“${title}” liked ❤️`);
   } catch (err) { toast(err.message, 'error'); }
-}
+};
 
-function showCreateUserModal() {
-  const name = prompt('Enter a name for the new user:');
-  if (!name || !name.trim()) return;
-  const color = prompt('Pick an avatar color (hex, e.g. #9b5de5):', '#9b5de5') || '#9b5de5';
+window.showCreateUserModal = function() {
+  const name  = prompt('Name for the new user:');
+  if (!name?.trim()) return;
+  const color = prompt('Avatar color (hex):', '#1040C0') || '#1040C0';
   api('/api/users', { method: 'POST', body: JSON.stringify({ name: name.trim(), avatarColor: color }) })
-    .then(user => {
-      _users.push(user);
-      populateUserSelects();
-      toast(`Welcome, ${user.name}! \uD83C\uDF89`);
-    })
+    .then(user => { _users.push(user); populateUserSelects(); toast(`Welcome, ${user.name}! 🎉`); })
     .catch(err => toast(err.message, 'error'));
-}
+};
 
-// ── HISTORY PAGE ───────────────────────────────────────────────────────────
+// ── HISTORY ───────────────────────────────────────────────────────────────
 async function loadHistory() {
   const list = document.getElementById('historyList');
   list.innerHTML = loadingBox();
   try {
     const matches = await api('/api/matches');
     if (!matches.length) {
-      list.innerHTML = stateBox('\uD83C\uDF1A', 'No matches yet. Go find your first movie tonight!');
+      list.innerHTML = stateBox('🌚', 'No matches yet. Find your first movie tonight!');
       return;
     }
     list.innerHTML = matches.map(m => renderHistoryCard(m)).join('');
-  } catch { list.innerHTML = stateBox('\u274c', 'Could not load history'); }
+    // Stagger cards
+    setTimeout(() => {
+      const cards = list.querySelectorAll('.history-card');
+      if (cards.length) {
+        animate(cards, { opacity: [0, 1], y: [16, 0] }, { delay: stagger(0.08), duration: 0.35, easing: 'ease-out' });
+      }
+    }, 10);
+  } catch { list.innerHTML = stateBox('❌', 'Could not load history'); }
 }
 
 function renderHistoryCard(m) {
-  const date   = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
-  const users  = (m.users || []).map(u => `
-    <div class="user-chip">${avatarEl(u)}<span>${u.name}</span></div>
-  `).join('<span class="sep">\uFF06</span>');
-
+  const date  = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
+  const users = (m.users || []).map(u => `<span>${u.name}</span>`).join('<span class="history-sep"> ✕ </span>');
   const chosen = m.chosenMovie
     ? `<div class="history-chosen">
-         <span class="trophy">\uD83C\uDFC6</span>
+         <span class="history-chosen-icon">🏆</span>
          <div>
-           <div style="font-weight:700">${m.chosenMovie.title}</div>
-           <div style="font-size:0.78rem;color:var(--muted)">${m.chosenMovie.genre} &middot; ${m.chosenMovie.year}</div>
+           <strong>${m.chosenMovie.title}</strong><br/>
+           <small>${m.chosenMovie.genre} &middot; ${m.chosenMovie.year}</small>
          </div>
        </div>`
-    : `<div style="color:var(--muted);font-size:0.82rem;margin-top:10px">No winner picked yet.</div>`;
+    : `<p class="history-pending">No winner picked yet</p>`;
 
   return `
     <div class="history-card">
-      <div class="history-card-header">
+      <div class="history-card-top">
         <div class="history-users">${users}</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="color:var(--muted);font-size:0.78rem">${date}</span>
-          <span class="badge ${m.status === 'chosen' ? 'badge-chosen' : 'badge-pending'}">
-            ${m.status === 'chosen' ? '\u2705 Chosen' : 'Pending'}
+          <span style="font-size:0.72rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:1px">${date}</span>
+          <span class="status-tag ${m.status === 'chosen' ? 'status-chosen' : 'status-pending'}">
+            ${m.status === 'chosen' ? '✓ Chosen' : 'Pending'}
           </span>
-          <button class="icon-btn danger" onclick="deleteMatch('${m.id}')" title="Delete">\uD83D\uDDD1\uFE0F</button>
+          <button class="icon-btn" onclick="deleteMatch('${m.id}')" style="border-color:#D02020;color:#D02020">🗑️</button>
         </div>
       </div>
-      ${chosen}
-    </div>
-  `;
+      <div class="history-card-body">${chosen}</div>
+    </div>`;
 }
 
-async function deleteMatch(id) {
-  if (!confirm('Delete this match from history?')) return;
+window.deleteMatch = async function(id) {
+  if (!confirm('Delete this match?')) return;
   try {
     await api(`/api/matches/${id}`, { method: 'DELETE' });
     toast('Match deleted');
     loadHistory();
   } catch (err) { toast(err.message, 'error'); }
-}
+};
 
-// ── Boot ─────────────────────────────────────────────────────────────────────
+// ── Boot
 init();
 </script>
 </body>
