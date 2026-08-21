@@ -11,7 +11,35 @@ import { notFound }    from "./middleware/not-found.js";
 
 const app = express();
 
-app.use(cors());
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// Allowed origins: localhost for dev + the deployed Render URL.
+// Add more origins to the array or set CORS_ORIGIN env var (comma-separated).
+const BASE_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://movie-match-y191.onrender.com",
+];
+
+const extraOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : [];
+
+const allowedOrigins = [...new Set([...BASE_ORIGINS, ...extraOrigins])];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow server-to-server / curl requests (no Origin header)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${origin}' not allowed`));
+    },
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.static("public"));
 
