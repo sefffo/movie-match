@@ -3,36 +3,758 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Movie Match</title>
+  <title>Movie Match — What are we watching tonight?</title>
   <style>
+    /* ── Reset & base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0d0d1a;
+      --surface:  #16213e;
+      --card:     #1a2a4a;
+      --accent:   #e94560;
+      --accent2:  #9b5de5;
+      --text:     #eaeaea;
+      --muted:    #8892a4;
+      --border:   rgba(255,255,255,0.08);
+      --radius:   12px;
+    }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
-      color: #eaeaea;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+    button { cursor: pointer; font-family: inherit; }
+    input, select, textarea { font-family: inherit; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Nav ───────────────────────────────────────────────── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+    .nav-brand span { color: var(--text); }
+    .nav-links { display: flex; gap: 4px; margin-left: auto; }
+    .nav-link {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      transition: all 0.15s;
+      background: none;
+      border: none;
+    }
+    .nav-link:hover  { color: var(--text); background: rgba(255,255,255,0.06); }
+    .nav-link.active { color: var(--text); background: rgba(255,255,255,0.1); font-weight: 600; }
+
+    /* ── Pages ───────────────────────────────────────────────── */
+    .page { display: none; flex: 1; padding: 32px 24px; max-width: 860px; width: 100%; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ── Hero (Tonight page) ──────────────────────────────── */
+    .hero { text-align: center; padding: 40px 0 32px; }
+    .hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { color: var(--muted); margin-top: 8px; font-size: 1rem; }
+
+    /* ── Match panel ────────────────────────────────────────── */
+    .match-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .match-selectors {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .vs { color: var(--accent); font-weight: 800; font-size: 1.1rem; text-align: center; }
+    select {
+      width: 100%;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238892a4' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 11px 24px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #c73450; transform: translateY(-1px); }
+    .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
+    .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+    .btn-full { width: 100%; justify-content: center; }
+
+    /* ── Cards ────────────────────────────────────────────────── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.18); }
+    .card-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-bottom: 12px;
+      background: var(--surface);
+    }
+    .card-poster-placeholder {
+      width: 100%;
+      aspect-ratio: 2/3;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--surface), var(--card));
     }
-    h1 { font-size: 2rem; margin: 0; }
-    p  { color: #9aa5c4; margin: 0; }
+    .card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+    .card .meta { color: var(--muted); font-size: 0.78rem; margin-bottom: 8px; }
     .badge {
-      margin-top: 16px;
-      padding: 8px 20px;
+      display: inline-block;
+      padding: 3px 10px;
       border-radius: 20px;
-      background: rgba(255,255,255,0.07);
-      font-size: 0.85rem;
-      color: #9aa5c4;
+      font-size: 0.72rem;
+      font-weight: 600;
     }
-    .badge span { color: #e94560; font-weight: 700; }
+    .badge-exact   { background: rgba(233,69,96,0.2);  color: #e94560; }
+    .badge-genre   { background: rgba(155,93,229,0.2); color: #9b5de5; }
+    .badge-chosen  { background: rgba(72,199,116,0.2); color: #48c774; }
+    .badge-pending { background: rgba(136,146,164,0.2); color: var(--muted); }
+
+    /* ── State messages ───────────────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+    .state-box .emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+    .state-box p { font-size: 0.9rem; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Section header ───────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-header h2 { font-size: 1rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Form (My Movies page) ──────────────────────────────── */
+    .form-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .form-panel h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-field label { font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-field input, .form-field select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+    .form-field input:focus, .form-field select:focus { outline: none; border-color: var(--accent); }
+    .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+    /* ── Movie item in lists ─────────────────────────────────────── */
+    .movie-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .movie-row-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .movie-row-info { flex: 1; min-width: 0; }
+    .movie-row-info strong { font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .movie-row-info small { color: var(--muted); font-size: 0.78rem; }
+    .movie-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      padding: 5px 8px;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .icon-btn.danger:hover { border-color: #e74c3c; color: #e74c3c; }
+
+    /* ── User avatar chip ────────────────────────────────────────── */
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px 4px 4px;
+      font-size: 0.85rem;
+    }
+
+    /* ── History cards ──────────────────────────────────────────── */
+    .history-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .history-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .history-users { display: flex; align-items: center; gap: 6px; }
+    .history-users .sep { color: var(--muted); font-size: 0.8rem; }
+    .history-chosen {
+      background: rgba(72,199,116,0.1);
+      border: 1px solid rgba(72,199,116,0.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .history-chosen .trophy { font-size: 1.3rem; }
+    .recs-strip { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .rec-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ── Toast ─────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      z-index: 999;
+      transition: transform 0.25s ease;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: rgba(72,199,116,0.4); }
+    #toast.error   { border-color: rgba(233,69,96,0.4); }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .match-selectors { grid-template-columns: 1fr; }
+      .vs { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.8rem; }
+    }
   </style>
 </head>
 <body>
-  <h1>🎬 Movie Match</h1>
-  <p>What are we watching tonight?</p>
-  <div class="badge">Stage <span>1</span> — Server is live ✅</div>
+
+<!-- ── Nav ─────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-brand">🎬 Movie<span>Match</span></div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('tonight')">Tonight</button>
+    <button class="nav-link" onclick="showPage('movies')">My Movies</button>
+    <button class="nav-link" onclick="showPage('history')">History</button>
+  </div>
+</nav>
+
+<!-- ── Page: Tonight ────────────────────────────────────────────── -->
+<div id="page-tonight" class="page active">
+  <div class="hero">
+    <h1>What are we watching <span>tonight?</span></h1>
+    <p>Pick two people — Movie Match ends the scrolling.</p>
+  </div>
+
+  <div class="match-panel">
+    <div class="match-selectors">
+      <select id="user1Select"><option value="">Loading…</option></select>
+      <div class="vs">VS</div>
+      <select id="user2Select"><option value="">Loading…</option></select>
+    </div>
+    <button class="btn btn-primary btn-full" id="matchBtn" disabled onclick="runMatch()">
+      🎬 Find our movie
+    </button>
+  </div>
+
+  <div id="matchResults"></div>
+</div>
+
+<!-- ── Page: My Movies ───────────────────────────────────────────── -->
+<div id="page-movies" class="page">
+  <div class="section-header" style="margin-bottom:24px">
+    <div>
+      <h1 style="font-size:1.6rem;font-weight:800">My Movies</h1>
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Add movies and manage your watchlist & likes</p>
+    </div>
+  </div>
+
+  <!-- Who am I -->
+  <div class="form-panel" style="padding:16px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <label style="color:var(--muted);font-size:0.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Viewing as</label>
+    <select id="myUserSelect" onchange="loadMyMovies()" style="flex:1;min-width:160px;max-width:260px"><option value="">Select user…</option></select>
+    <button class="btn btn-secondary btn-sm" onclick="showCreateUserModal()">+ New user</button>
+  </div>
+
+  <!-- Add movie form -->
+  <div class="form-panel">
+    <h2>➕ Add a Movie</h2>
+    <div class="form-grid">
+      <div class="form-field full">
+        <label>Title</label>
+        <input id="movieTitle" type="text" placeholder="e.g. Interstellar" />
+      </div>
+      <div class="form-field">
+        <label>Genre</label>
+        <select id="movieGenre"><option value="">Select…</option></select>
+      </div>
+      <div class="form-field">
+        <label>Year</label>
+        <input id="movieYear" type="number" placeholder="2014" min="1900" max="2099" />
+      </div>
+      <div class="form-field full">
+        <label>Poster URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+        <input id="moviePoster" type="url" placeholder="https://..." />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="createMovie()">Add Movie</button>
+    </div>
+  </div>
+
+  <!-- Movie list -->
+  <div class="section-header">
+    <h2>All Movies</h2>
+    <input id="searchInput" type="text" placeholder="Search…" oninput="searchMovies()"
+      style="background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 12px;font-size:0.85rem;width:180px" />
+  </div>
+  <div id="movieList"></div>
+</div>
+
+<!-- ── Page: History ─────────────────────────────────────────────── -->
+<div id="page-history" class="page">
+  <div style="margin-bottom:24px">
+    <h1 style="font-size:1.6rem;font-weight:800">Match History</h1>
+    <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Every movie night decision, saved forever.</p>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ───────────────────────────────────────────────────────────────────────────────
+const API = '';
+let _users  = [];
+let _genres = [];
+let _allMovies = [];
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error?.message || 'Request failed');
+  return json.data;
+}
+
+let toastTimer;
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'success' ? '\u2705 ' : '\u274c ') + msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+function stateBox(emoji, msg) {
+  return `<div class="state-box"><span class="emoji">${emoji}</span><p>${msg}</p></div>`;
+}
+function loadingBox() {
+  return `<div class="state-box"><div class="spinner"></div><p>Loading…</p></div>`;
+}
+
+function genreIcon(genre) {
+  const map = { 'Sci-Fi': '\uD83D\uDE80', Action: '\uD83D\uDCA5', Horror: '\uD83D\uDC7B',
+    Comedy: '\uD83D\uDE02', Drama: '\uD83C\uDFAD', Thriller: '\uD83D\uDD2A', Mystery: '\uD83D\uDD75\uFE0F',
+    Animation: '\uD83C\uDFAC', Musical: '\uD83C\uDFB6', Romance: '\u2764\uFE0F', Crime: '\uD83D\uDD2B',
+    Fantasy: '\u2728', Documentary: '\uD83C\uDFA5', Western: '\uD83E\uDD20' };
+  return map[genre] || '\uD83C\uDFAC';
+}
+
+function avatarEl(user) {
+  if (!user) return '';
+  const letter = (user.name || '?')[0].toUpperCase();
+  const color  = user.avatarColor || '#e94560';
+  return `<div class="avatar" style="background:${color}20;color:${color}">${letter}</div>`;
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name === 'tonight' ? 'tonight' : name === 'movies' ? 'movie' : 'history'))
+      b.classList.add('active');
+  });
+  if (name === 'history') loadHistory();
+  if (name === 'movies')  loadAllMovies();
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    [_users, _genres] = await Promise.all([
+      api('/api/users'),
+      api('/api/movies/genres'),
+    ]);
+    populateUserSelects();
+    populateGenreSelect();
+  } catch {
+    toast('Could not reach the server', 'error');
+  }
+}
+
+function populateUserSelects() {
+  const opts = _users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  const placeholder = '<option value="">Select person…</option>';
+  document.getElementById('user1Select').innerHTML = placeholder + opts;
+  document.getElementById('user2Select').innerHTML = placeholder + opts;
+  document.getElementById('myUserSelect').innerHTML = '<option value="">Select user…</option>' + opts;
+  document.getElementById('matchBtn').disabled = _users.length < 2;
+}
+
+function populateGenreSelect() {
+  document.getElementById('movieGenre').innerHTML =
+    '<option value="">Select…</option>' +
+    _genres.map(g => `<option value="${g}">${g}</option>`).join('');
+}
+
+// ── TONIGHT PAGE ────────────────────────────────────────────────────────────
+async function runMatch() {
+  const u1 = document.getElementById('user1Select').value;
+  const u2 = document.getElementById('user2Select').value;
+  if (!u1 || !u2) return toast('Pick two people first', 'error');
+  if (u1 === u2)  return toast('Pick two different people!', 'error');
+
+  const btn = document.getElementById('matchBtn');
+  const results = document.getElementById('matchResults');
+  btn.disabled = true;
+  results.innerHTML = loadingBox();
+
+  try {
+    const match = await api('/api/matches', {
+      method: 'POST',
+      body: JSON.stringify({ userOneId: u1, userTwoId: u2 }),
+    });
+    renderMatchResults(match);
+  } catch (err) {
+    results.innerHTML = stateBox('\u274c', err.message);
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderMatchResults(match) {
+  const results = document.getElementById('matchResults');
+  if (!match.recommendations.length) {
+    results.innerHTML = stateBox('\uD83E\uDD14',
+      'No overlap found yet! Add more movies to both watchlists.');
+    return;
+  }
+
+  const isExact = match.matchType === 'exact';
+  const cards = match.recommendations.map(m => `
+    <div class="card">
+      ${m.posterUrl
+        ? `<img class="card-poster" src="${m.posterUrl}" alt="${m.title}" onerror="this.style.display='none'" />`
+        : `<div class="card-poster-placeholder">${genreIcon(m.genre)}</div>`}
+      <h3>${m.title}</h3>
+      <div class="meta">${m.genre} &middot; ${m.year}</div>
+      <div style="margin-bottom:10px">
+        <span class="badge ${isExact ? 'badge-exact' : 'badge-genre'}">
+          ${isExact ? '\u2764\uFE0F Both want this' : '\u2728 Genre match'}
+        </span>
+      </div>
+      <button class="btn btn-secondary btn-sm btn-full" onclick="chooseWinner('${match.id}', '${m.id}', '${m.title.replace(/'/g, "\\'")}')">
+        \uD83C\uDFC6 We watched this!
+      </button>
+    </div>
+  `).join('');
+
+  results.innerHTML = `
+    <div class="section-header" style="margin-bottom:14px">
+      <h2>${match.recommendations.length} Recommendation${match.recommendations.length > 1 ? 's' : ''}</h2>
+      <span class="badge ${isExact ? 'badge-exact' : 'badge-genre'}">
+        ${isExact ? 'Exact match' : 'Genre-based'}
+      </span>
+    </div>
+    <div class="grid">${cards}</div>
+  `;
+}
+
+async function chooseWinner(matchId, movieId, title) {
+  try {
+    await api(`/api/matches/${matchId}/choose`, {
+      method: 'POST',
+      body: JSON.stringify({ movieId }),
+    });
+    toast(`\uD83C\uDFC6 Enjoy ${title}!`);
+    document.getElementById('matchResults').innerHTML =
+      stateBox('\uD83C�', `Great choice! You\'re watching <strong>${title}</strong> tonight.`);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+// ── MOVIES PAGE ─────────────────────────────────────────────────────────────
+async function loadAllMovies(search = '') {
+  const list = document.getElementById('movieList');
+  list.innerHTML = loadingBox();
+  try {
+    _allMovies = await api('/api/movies' + (search ? `?search=${encodeURIComponent(search)}` : ''));
+    renderMovieList();
+  } catch { list.innerHTML = stateBox('\u274c', 'Could not load movies'); }
+}
+
+function renderMovieList() {
+  const list = document.getElementById('movieList');
+  const userId = document.getElementById('myUserSelect').value;
+  if (!_allMovies.length) {
+    list.innerHTML = stateBox('\uD83C\uDFAC', 'No movies yet. Add one above!');
+    return;
+  }
+  list.innerHTML = _allMovies.map(m => `
+    <div class="movie-row">
+      <div class="movie-row-icon">${genreIcon(m.genre)}</div>
+      <div class="movie-row-info">
+        <strong>${m.title}</strong>
+        <small>${m.genre} &middot; ${m.year}</small>
+      </div>
+      <div class="movie-row-actions">
+        ${userId ? `
+          <button class="icon-btn" title="Add to Watchlist" onclick="addToWatchlist('${userId}', '${m.id}', '${m.title.replace(/'/g, "\\'")}')">📌</button>
+          <button class="icon-btn" title="Mark as Liked"    onclick="addLike('${userId}', '${m.id}', '${m.title.replace(/'/g, "\\'")}')">❤\uFE0F</button>
+        ` : ''}
+        <button class="icon-btn danger" title="Delete" onclick="deleteMovie('${m.id}', '${m.title.replace(/'/g, "\\'")}')">🗑\uFE0F</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function createMovie() {
+  const title  = document.getElementById('movieTitle').value.trim();
+  const genre  = document.getElementById('movieGenre').value;
+  const year   = document.getElementById('movieYear').value;
+  const poster = document.getElementById('moviePoster').value.trim() || null;
+  if (!title || !genre || !year) return toast('Title, genre and year are required', 'error');
+  try {
+    await api('/api/movies', { method: 'POST', body: JSON.stringify({ title, genre, year: +year, posterUrl: poster }) });
+    toast(`\"${title}\" added`);
+    document.getElementById('movieTitle').value  = '';
+    document.getElementById('movieYear').value   = '';
+    document.getElementById('moviePoster').value = '';
+    loadAllMovies();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function deleteMovie(id, title) {
+  if (!confirm(`Delete \"${title}\"? This removes it from all watchlists.`)) return;
+  try {
+    await api(`/api/movies/${id}`, { method: 'DELETE' });
+    toast(`\"${title}\" deleted`);
+    loadAllMovies();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function searchMovies() {
+  const q = document.getElementById('searchInput').value.trim();
+  loadAllMovies(q);
+}
+
+function loadMyMovies() { renderMovieList(); }
+
+async function addToWatchlist(userId, movieId, title) {
+  try {
+    await api(`/api/users/${userId}/watchlist`, { method: 'POST', body: JSON.stringify({ movieId }) });
+    toast(`Added \"${title}\" to watchlist \uD83D\uDCCC`);
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function addLike(userId, movieId, title) {
+  try {
+    await api(`/api/users/${userId}/likes`, { method: 'POST', body: JSON.stringify({ movieId }) });
+    toast(`\"${title}\" marked as liked \u2764\uFE0F`);
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+function showCreateUserModal() {
+  const name = prompt('Enter a name for the new user:');
+  if (!name || !name.trim()) return;
+  const color = prompt('Pick an avatar color (hex, e.g. #9b5de5):', '#9b5de5') || '#9b5de5';
+  api('/api/users', { method: 'POST', body: JSON.stringify({ name: name.trim(), avatarColor: color }) })
+    .then(user => {
+      _users.push(user);
+      populateUserSelects();
+      toast(`Welcome, ${user.name}! \uD83C\uDF89`);
+    })
+    .catch(err => toast(err.message, 'error'));
+}
+
+// ── HISTORY PAGE ───────────────────────────────────────────────────────────
+async function loadHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = loadingBox();
+  try {
+    const matches = await api('/api/matches');
+    if (!matches.length) {
+      list.innerHTML = stateBox('\uD83C\uDF1A', 'No matches yet. Go find your first movie tonight!');
+      return;
+    }
+    list.innerHTML = matches.map(m => renderHistoryCard(m)).join('');
+  } catch { list.innerHTML = stateBox('\u274c', 'Could not load history'); }
+}
+
+function renderHistoryCard(m) {
+  const date   = m.createdAt ? new Date(m.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
+  const users  = (m.users || []).map(u => `
+    <div class="user-chip">${avatarEl(u)}<span>${u.name}</span></div>
+  `).join('<span class="sep">\uFF06</span>');
+
+  const chosen = m.chosenMovie
+    ? `<div class="history-chosen">
+         <span class="trophy">\uD83C\uDFC6</span>
+         <div>
+           <div style="font-weight:700">${m.chosenMovie.title}</div>
+           <div style="font-size:0.78rem;color:var(--muted)">${m.chosenMovie.genre} &middot; ${m.chosenMovie.year}</div>
+         </div>
+       </div>`
+    : `<div style="color:var(--muted);font-size:0.82rem;margin-top:10px">No winner picked yet.</div>`;
+
+  return `
+    <div class="history-card">
+      <div class="history-card-header">
+        <div class="history-users">${users}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--muted);font-size:0.78rem">${date}</span>
+          <span class="badge ${m.status === 'chosen' ? 'badge-chosen' : 'badge-pending'}">
+            ${m.status === 'chosen' ? '\u2705 Chosen' : 'Pending'}
+          </span>
+          <button class="icon-btn danger" onclick="deleteMatch('${m.id}')" title="Delete">\uD83D\uDDD1\uFE0F</button>
+        </div>
+      </div>
+      ${chosen}
+    </div>
+  `;
+}
+
+async function deleteMatch(id) {
+  if (!confirm('Delete this match from history?')) return;
+  try {
+    await api(`/api/matches/${id}`, { method: 'DELETE' });
+    toast('Match deleted');
+    loadHistory();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+init();
+</script>
 </body>
 </html>
