@@ -8,8 +8,8 @@ export const swaggerSpec = {
     contact: { name: "Saif Lotfy", url: "https://github.com/sefffo/movie-match" },
   },
   servers: [
-    { url: "http://localhost:3000", description: "Local development" },
-    { url: "https://movie-match.onrender.com", description: "Production" },
+    { url: "http://localhost:3000",                        description: "Local development" },
+    { url: "https://movie-match-y191.onrender.com",        description: "Production" },
   ],
   tags: [
     { name: "Health",  description: "Database connectivity check" },
@@ -94,7 +94,7 @@ export const swaggerSpec = {
     },
   },
   paths: {
-    // ── Health ───────────────────────────────────────────────────────────────────────
+    // ── Health ───────────────────────────────────────────────────────────────────────────────
     "/health": {
       get: {
         tags: ["Health"],
@@ -106,7 +106,7 @@ export const swaggerSpec = {
       },
     },
 
-    // ── Users ─────────────────────────────────────────────────────────────────────
+    // ── Users ─────────────────────────────────────────────────────────────────────────────
     "/api/users": {
       post: {
         tags: ["Users"], summary: "Create a user profile",
@@ -149,7 +149,7 @@ export const swaggerSpec = {
       delete: { tags: ["Users"], summary: "Unlike a movie", responses: { 204: { description: "Removed" } } },
     },
 
-    // ── Movies ────────────────────────────────────────────────────────────────────
+    // ── Movies ─────────────────────────────────────────────────────────────────────────────
     "/api/movies": {
       post: {
         tags: ["Movies"], summary: "Create a movie",
@@ -175,7 +175,7 @@ export const swaggerSpec = {
       delete: { tags: ["Movies"], summary: "Delete movie",    responses: { 204: { description: "Deleted" }, 404: { $ref: "#/components/responses/NotFound" } } },
     },
 
-    // ── Matches (Stage 3 — documented now, implemented next) ─────────────────────
+    // ── Matches ───────────────────────────────────────────────────────────────────────────
     "/api/matches": {
       post: {
         tags: ["Matches"], summary: "Generate a new match session",
